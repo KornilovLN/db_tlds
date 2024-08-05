@@ -1,0 +1,13 @@
+project/
+│
+├── docker-compose.yml
+├── postgres/
+│   └── Dockerfile
+├── sender/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── app.py
+└── receiver/
+    ├── Dockerfile
+    ├── requirements.txt
+    └── app.py

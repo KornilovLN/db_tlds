@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: exampledb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  receiver:
+    build: ./receiver
+    container_name: receiver
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+  sender:
+    build: ./sender
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+    deploy:
+      replicas: 10
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
