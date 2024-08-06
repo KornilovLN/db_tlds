@@ -1,5 +1,5 @@
 import os
-import time
+from time import sleep
 import numpy as np
 import psycopg2
 from datetime import datetime
@@ -12,10 +12,11 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def main():
+    sleep(10)  # Добавляем задержку в 10 секунд
     conn = get_db_connection()
     cur = conn.cursor()
 
-    for i in range(10000):
+    for i in range(100000):
         timestamp = datetime.utcnow()
         x = np.random.rand()
         y = np.random.rand()

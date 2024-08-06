@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    image: timescale/timescaledb:latest-pg16 # Используем образ TimescaleDB
     container_name: postgres
     environment:
       POSTGRES_USER: leon
@@ -11,6 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Добавляем инициализационный скрипт
     networks:
       - tsdb_network
     ports:
