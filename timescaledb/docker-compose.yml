@@ -5,37 +5,42 @@ services:
     image: postgres:latest
     container_name: postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: exampledb
+      POSTGRES_USER: leon
+      POSTGRES_PASSWORD: 18leon28
+      POSTGRES_DB: tsdb
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app_network
+      - tsdb_network
+    ports:
+      - "5432:5432"  # Expose the PostgreSQL port
+
+  sender:
+    build: ./sender
+    container_name: sender
+    environment:
+      DATABASE_URL: postgres://leon:18leon28@postgres:5432/tsdb
+    depends_on:
+      - postgres
+    networks:
+      - tsdb_network
+    ports:
+      - "5003:5000"  # Порт для Flask приложения
 
   receiver:
     build: ./receiver
     container_name: receiver
     environment:
-      DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+      DATABASE_URL: postgres://leon:18leon28@postgres:5432/tsdb
     depends_on:
       - postgres
     networks:
-      - app_network
-
-  sender:
-    build: ./sender
-    environment:
-      DATABASE_URL: postgres://user:password@postgres:5432/exampledb
-    depends_on:
-      - postgres
-    networks:
-      - app_network
-    deploy:
-      replicas: 10
+      - tsdb_network
+    ports:
+      - "5004:5000"  # Порт для Flask приложения
 
 networks:
-  app_network:
+  tsdb_network:
     driver: bridge
 
 volumes:

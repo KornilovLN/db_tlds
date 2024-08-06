@@ -1,6 +1,7 @@
 import os
 import psycopg2
 from datetime import datetime
+import time
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -8,6 +9,7 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def main():
+    time.sleep(10)  # Добавляем задержку в 10 секунд
     conn = get_db_connection()
     cur = conn.cursor()
 
