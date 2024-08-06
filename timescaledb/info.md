@@ -1,4 +1,7 @@
 ### Создание таблицы в базе данных
+
+command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+
 **_Запустите контейнер PostgreSQL и создайте таблицу для хранения данных:_**
 ```
 CREATE TABLE data (
@@ -45,9 +48,15 @@ docker-compose up --build
 
 #----------------------------------------------------------------------------------
 
-Скорость в 250 записей в секунду (или полторы) может показаться медленной для PostgreSQL в определённых случаях, особенно если рассматривать использование в высоконагруженных системах. Однако, производительность зависит от множества факторов, включая конфигурацию базы данных, аппаратные ресурсы, сложность запросов, оптимизацию индексов и другие аспекты.
+## Скорость в 250 записей в секунду (или полторы) может показаться медленной для PostgreSQL
+<br>в определённых случаях, особенно если рассматривать использование в высоконагруженных системах. <br>Однако, производительность зависит от множества факторов, включая
+<br>конфигурацию базы данных,
+<br>аппаратные ресурсы,
+<br>сложность запросов,
+<br>оптимизацию индексов и другие аспекты.
 
-Вот несколько факторов, которые могут повлиять на производительность и способы их улучшения:
+### Вот несколько факторов, которые могут повлиять на производительность и способы их улучшения:
+
 1. Оптимизация настроек PostgreSQL
 
 Параметры конфигурации PostgreSQL могут значительно повлиять на производительность. Проверьте следующие параметры в файле postgresql.conf:
@@ -147,3 +156,186 @@ def get_db_connection():
 ### Эти шаги помогут вам понять,
 <br>где могут быть узкие места
 <br>и как можно улучшить производительность работы с PostgreSQL.
+
+#----------------------------------------------------------------------------------
+
+## Настройка параметров конфигурации PostgreSQL в контейнере Docker
+<br>может быть выполнена несколькими способами.
+<br>Пошаговое руководство, как это сделать:
+
+**_Способ 1: Изменение файла конфигурации postgresql.conf_**
+    <br>Создание пользовательского файла конфигурации postgresql.conf
+    <br>с необходимыми параметрами в директории вашего проекта:
+```
+    plaintext
+
+# postgresql.conf
+shared_buffers = 1GB
+work_mem = 64MB
+maintenance_work_mem = 128MB
+effective_cache_size = 4GB
+```
+
+**_Изменение docker-compose.yml для использования пользовательского файла конфигурации_**
+    <br>Обновите ваш docker-compose.yml файл, чтобы использовать пользовательский файл конфигурации:
+```
+yaml
+
+    version: '3.8'
+
+    services:
+      postgres:
+        image: postgres:latest
+        container_name: postgres
+        environment:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: exampledb
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+          - ./postgresql.conf:/etc/postgresql/postgresql.conf  # Добавьте этот том
+        networks:
+          - app_network
+        command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]  # Добавьте эту строку
+
+      receiver:
+        build: ./receiver
+        container_name: receiver
+        environment:
+          DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+        depends_on:
+          - postgres
+        networks:
+          - app_network
+
+      sender:
+        build: ./sender
+        environment:
+          DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+        depends_on:
+          - postgres
+        networks:
+          - app_network
+        deploy:
+          replicas: 10
+
+    networks:
+      app_network:
+        driver: bridge
+
+    volumes:
+      postgres_data:
+```
+
+**_Способ 2: Использование переменных окружения для настройки параметров_**
+    <br>Вы также можете настроить некоторые параметры через переменные окружения:
+    <br>Добавьте переменные окружения в docker-compose.yml
+```
+    yaml
+
+    version: '3.8'
+
+    services:
+      postgres:
+        image: postgres:latest
+        container_name: postgres
+        environment:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: exampledb
+          PGDATA: /var/lib/postgresql/data/pgdata
+          POSTGRES_SHARED_BUFFERS: 1GB
+          POSTGRES_WORK_MEM: 64MB
+          POSTGRES_MAINTENANCE_WORK_MEM: 128MB
+          POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+        networks:
+          - app_network
+
+      receiver:
+        build: ./receiver
+        container_name: receiver
+        environment:
+          DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+        depends_on:
+          - postgres
+        networks:
+          - app_network
+
+      sender:
+        build: ./sender
+        environment:
+          DATABASE_URL: postgres://user:password@postgres:5432/exampledb
+        depends_on:
+          - postgres
+        networks:
+          - app_network
+        deploy:
+          replicas: 10
+
+    networks:
+      app_network:
+        driver: bridge
+
+    volumes:
+      postgres_data:
+```
+
+<br>Не все параметры конфигурации могут быть установлены через переменные окружения.
+<br>В этом случае лучше использовать пользовательский файл конфигурации.
+
+**_Способ 3: Настройка после запуска контейнера_**
+<br>Запуск контейнера
+```
+# bash
+docker-compose up -d
+```
+
+<br>Подключение к контейнеру
+```
+# bash
+docker exec -it postgres bash
+```
+
+<br>Изменение конфигурационного файла
+<br>Внутри контейнера откройте файл конфигурации PostgreSQL:
+```
+# bash
+vi /var/lib/postgresql/data/postgresql.conf
+```
+<br>Добавьте или измените необходимые параметры:
+```
+plaintext
+shared_buffers = 1GB
+work_mem = 64MB
+maintenance_work_mem = 128MB
+effective_cache_size = 4GB
+```
+
+<br>Перезапуск PostgreSQL внутри контейнера:
+```
+# bash
+pg_ctlcluster 13 main restart
+```
+
+<br>Проверка настроек
+
+<br>После изменения настроек и перезапуска PostgreSQL,
+<br>вы можете проверить текущие параметры конфигурации следующим образом:
+
+<br>Подключение к контейнеру PostgreSQL
+```
+# bash
+docker exec -it postgres psql -U user -d exampledb
+```
+
+<br>Выполнение SQL-запроса для проверки параметров
+```
+-- sql
+    SHOW shared_buffers;
+    SHOW work_mem;
+    SHOW maintenance_work_mem;
+    SHOW effective_cache_size;
+```
+

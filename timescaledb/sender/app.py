@@ -25,10 +25,15 @@ def main():
                 (timestamp, CONTAINER_ID, x, y, i)
             )
             conn.commit()
-            print(f"Inserted row {i} from container {CONTAINER_ID}")
+            #print(f"Inserted row {i} from container {CONTAINER_ID}")
         except Exception as e:
             print(f"Error inserting row {i} from container {CONTAINER_ID}: {e}")
         #time.sleep(1.0)  # имитируем некоторую задержку
+
+        # Установка флага завершения
+    cur.execute("INSERT INTO status (flag) VALUES ('done')")
+    conn.commit()
+    print("Completion flag set.")
 
     cur.close()
     conn.close()

@@ -1,0 +1,178 @@
+version: '3'
+
+services:
+  db:
+    #---# Указываем имя хоста для сервиса db
+    hostname: db
+    #---# Указываем имя контейнера для сервиса db
+    container_name: db
+    #---# Используем образ MongoDB для сервиса db
+    image: mongo
+    #---# Монтируем локальную директорию './mongodb' в контейнер по пути '/data/db'
+    volumes:
+    - './mongodb:/data/db'
+
+  proxy:
+    #---# Указываем имя контейнера для сервиса proxy
+    container_name: proxy
+    #---# Указываем имя хоста для сервиса proxy
+    hostname: proxy
+    #---# Используем образ Traefik для сервиса proxy
+    image: registry.master.cns/tlds_traefik:latest
+    #---# Монтируем сокет Docker для управления контейнерами
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    #---# Пробрасываем порты для доступа к Traefik
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    #---# Указываем команду для запуска Traefik
+    command: /traefik
+    #---# Настраиваем логирование для сервиса proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "5"
+
+  ekatra:
+    #---# Указываем имя контейнера для сервиса ekatra
+    container_name: ekatra
+    #---# Указываем имя хоста для сервиса ekatra
+    hostname: ekatra
+    #---# Используем образ ekatra для сервиса ekatra
+    image: registry.master.cns/tlds_ekatra:latest
+    #---# Пробрасываем порты (закомментировано)
+    # ports:
+    # - "80:80"
+    # - "8080:8080"
+    # - "9090:9090"
+    #---# Монтируем локальные директории в контейнер
+    volumes:
+    - './log:/var/log'
+    - './node:/node'
+    - '../../ekatra/ekatra/hub/ekatra_hub:/usr/local/lib/python3.7/dist-packages/ekatra_hub'
+    - '../ekatra/ekatra/tlds:/usr/local/lib/python3.7/dist-packages/ekatra/tlds'
+    - '../../ekatra/tools/ekatra/tools/:/usr/local/lib/python3.7/dist-packages/ekatra/tools/'
+    - '../coolie/roles/ekatra/files/nginx:/etc/nginx/sites-available'
+    #---# Устанавливаем переменные окружения для сервиса ekatra
+    environment:
+      LOG_LEVEL: info
+      LANG: C.UTF-8
+      PYTHONUNBUFFERED: 1
+      LIVERELOAD: 'ekatra.tools:ekatra.tlds'
+    #---# Настраиваем логирование для сервиса ekatra
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "5"
+    #---# Устанавливаем метки для Traefik
+    labels:
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.ngixn.frontend.rule=Host:local.ekatra.io"
+      - "traefik.ngixn.port=80"
+      - "traefik.crossbar.frontend.rule=Host:local.ekatra.io;Path:/ws"
+      - "traefik.crossbar.port=8080"
+      - "traefik.api.frontend.rule=Host:local.ekatra.io;PathPrefix:/api"
+      - "traefik.api.port=8081"
+      - "traefik.frontend.entryPoints=https,http"
+      - "traefik.frontend.redirect.entryPoint=https"
+      - "traefik.enable=true"
+
+  rtdb:
+    #---# Указываем имя контейнера для сервиса rtdb
+    container_name: rtdb
+    #---# Указываем имя хоста для сервиса rtdb
+    hostname: rtdb
+    #---# Используем образ rtdb для сервиса rtdb
+    image: "registry.master.cns/lmzmq/rtdb:latest"
+    #---# Монтируем локальные директории в контейнер
+    volumes:
+    - './log:/var/log'
+    - './rtdb:/rtdb'
+    - '../../ekatra/rtdb/rtdb/ekatra/rtdb/:/usr/local/lib/python3.7/dist-packages/ekatra/rtdb/'
+    - '../../ekatra/tools/ekatra/tools/:/usr/local/lib/python3.7/dist-packages/ekatra/tools/'
+    - '../../ekatra/rtdb/collector/rtdb_collector/:/usr/local/lib/python3.7/dist-packages/rtdb_collector/'
+    #---# Устанавливаем переменные окружения для сервиса rtdb
+    environment:
+      LOG_LEVEL: info
+      PYTHONUNBUFFERED: 1
+      RTDB_PROVIDER_ID: tlds
+      WAMP_BROKER_URL: rs://ekatra:9090
+      LIVERELOAD: 'ekatra.rtdb:ekatra.tools:tlds:rtdb_collector'
+    #---# Настраиваем логирование для сервиса rtdb
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "5"
+
+  sim:
+    #---# Указываем имя контейнера для сервиса sim
+    container_name: sim
+    #---# Указываем имя хоста для сервиса sim
+    hostname: sim
+    #---# Используем образ rtdb для сервиса sim
+    image: "registry.master.cns/lmzmq/rtdb:latest"
+    #---# Монтируем локальные директории в контейнер
+    volumes:
+    - './sim:/etc/services.d'
+    - './log:/var/log'
+    #---# Устанавливаем переменные окружения для сервиса sim
+    environment:
+      LOG_LEVEL: info
+      PYTHONUNBUFFERED: 1
+    #---# Настраиваем логирование для сервиса sim
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "5"
+
+  dev:
+    #---# Указываем имя хоста для сервиса dev
+    hostname: dev
+    #---# Указываем имя контейнера для сервиса dev
+    container_name: dev
+    #---# Используем образ node для сервиса dev
+    image: registry.master.cns/node:latest
+    #---# Пробрасываем порт 3000 для доступа к приложению
+    ports:
+     - "3000:3000"
+    #---# Устанавливаем рабочую директорию внутри контейнера
+    working_dir: /build/ui
+    #---# Указываем пользователя для выполнения команд
+    user: node
+    #---# Устанавливаем переменные окружения для сервиса dev
+    environment:
+      PATH: /usr/share/npm/bin/node-gyp-bin:/build/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      # HTTPS: "true"
+    #---# Монтируем локальную директорию в контейнер
+    volumes:
+    - ../:/build
+    #---# Указываем команду для запуска приложения
+    command:
+    - yarn
+    - start
+
+  ha:
+    #---# Указываем имя хоста для сервиса ha
+    hostname: ha
+    #---# Указываем имя контейнера для сервиса ha
+    container_name: ha
+    #---# Используем образ ha для сервиса ha
+    image: registry.master.cns/ha:latest
+    #---# Монтируем локальную директорию './rtdb/history' в контейнер по пути '/history'
+    volumes:
+      - './rtdb/history:/history'
+    #---# Пробрасываем порт 4242 для доступа к tsdb
+    ports:
+      - "4242:80"
+    #---# Устанавливаем переменные окружения для сервиса ha
+    environment:
+      SQLALCHEMY_DATABASE_URI: 'sqlite:////history/ts.db?isolation_level=None'
+      SQLALCHEMY_TRACK_MODIFICATIONS: ''
+      # DEBUG: '1'
+      # SQLALCHEMY_ECHO: 'debug'
