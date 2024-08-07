@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db:
+    image: questdb/questdb
+    container_name: questdb   
+    hostname: db 
+    environment:
+      - QDB_DATABASE=qstdb
+      - QDB_USER=star
+      - QDB_PASSWORD=18star28
+    volumes:
+      - qstdb_data:/var/lib/questdb/data # Общий том для хранения данных базы
+    networks:
+      - qstdb_network  
+    ports:
+      - "8812:8812"
+      - "9000:9000"
+
+  mng:
+    build: ./mng
+    container_name: questdb-mng
+    hostname: mng
+    environment:
+      - DATABASE_URL=questdb://star:18star28@db:8812/qstdb
+    depends_on:
+      - db
+    networks:
+      - qstdb_network        
+    ports:
+      - "5005:5000"   
+    volumes:
+      - ./mng/data:/app/data  # Общий том для доступа к сгенерированным данным
+
+  sender:
+    build: ./sender
+    container_name: questdb-sender
+    hostname: sender
+    environment:
+      - DATABASE_URL=questdb://star:18star28@db:8812/qstdb
+    depends_on:
+      - db
+    networks:
+      - qstdb_network        
+    ports:
+      - "5006:5000"     
+    volumes:
+      - ./mng/data:/app/data  # Общий том для доступа к сгенерированным данным       
+
+  receiver:
+    build: ./receiver
+    container_name: questdb-receiver
+    hostname: receiver
+    environment:
+      - DATABASE_URL=questdb://star:18star28@db:8812/qstdb
+    depends_on:
+      - db
+    networks:
+      - qstdb_network        
+    ports:
+      - "5007:5000"     
+    volumes:
+      - ./mng/data:/app/data  # Общий том для доступа к сгенерированным данным
+
+networks:
+  qstdb_network:
+    driver: bridge
+
+volumes:
+  qstdb_data:       
