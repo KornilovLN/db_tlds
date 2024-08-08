@@ -4,13 +4,16 @@ import psycopg2
 from datetime import datetime
 import time
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+#DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:quest@db:8812/qstdb")
+
 CONTAINER_ID = os.getenv('HOSTNAME')
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def main():
+    time.sleep(25)
     conn = get_db_connection()
     cur = conn.cursor()
 

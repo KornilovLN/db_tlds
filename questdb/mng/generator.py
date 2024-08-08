@@ -7,6 +7,8 @@ def generate_data(n=10000):
         x = np.random.rand()
         y = 1000 * np.sin(x)
         data.append((x, y))
+        if(i%100==0):
+            print(f"Generated {i+1}/{n}: x={x}, y={y}")
     return data
 
 if __name__ == '__main__':

@@ -1,27 +1,26 @@
 import os
+from time import sleep
 import psycopg2
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Получаем информацию о базе данных из переменных окружения
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:quest@db:8812/qstdb")
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def init_db():
+    '''
+    Инициализация базы данных.
+    Создает таблицу proba, если ее нет.
+    '''
+    sleep(10)  # Добавляем задержку в 10 секунд
     conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS data (
-            id SERIAL PRIMARY KEY,
-            timestamp TIMESTAMPTZ NOT NULL,
-            container_id VARCHAR(255) NOT NULL,
-            x DOUBLE PRECISION NOT NULL,
-            y DOUBLE PRECISION NOT NULL,
-            counter INT NOT NULL
-        )
-    """)
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS proba (id INT, tstamp TIMESTAMP, creater VARCHAR, x DOUBLE, y DOUBLE)")
     conn.commit()
-    cur.close()
+    cursor.close()
     conn.close()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_db()
+

@@ -1,7 +1,8 @@
 import os
 import psycopg2
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Получаем информацию о базе данных из переменных окружения
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:quest@db:8812/qstdb")
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)

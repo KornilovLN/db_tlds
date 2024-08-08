@@ -6,4 +6,5 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-CMD ["sh", "-c", "python initdb.py && python generator.py"]
+CMD ["sh", "-c", "sleep 10 && python initdb.py && python generator.py"]
+
